@@ -1,19 +1,21 @@
 .App {
-  text-align: center;
+
 }
 
 .App-header {
   background-color: #FFCF00;
-  height: 25px;
+  height: 30px;
   font-size: 20px;
   color: black;
   font-weight: 700;
   text-align: left;
+  padding-left:10px;
 }
 
 .Content {
   background-color: #F6F6EF;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
 }
 
 .Entry {

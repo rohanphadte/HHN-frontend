@@ -3,8 +3,39 @@ import React from "react";
 import {Container, Row, Col} from "react-bootstrap"
 
 class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      news_ids: [],
+      stories: {}
+    }
+  }
+
+  componentDidMount() {
+    var url = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
+    fetch(url)
+      .then(response => response.json())
+      .then(json => {
+         this.setState({ news_ids: json.slice(0, 20) })
+         this.populateData()
+      });
+  }
+
+  populateData() {
+    for (let i = 0; i < this.state.news_ids.length; i++) {
+      var url = "https://hacker-news.firebaseio.com/v0/item/" + this.state.news_ids[i] + ".json?print=pretty"
+      fetch(url)
+        .then(response => response.json())
+        .then(json => {
+          const stories = { ...this.state.stories, [this.state.news_ids[i]]: json} 
+          this.setState({ stories: stories })
+        });
+    }
+  }
 
   render() {
+    var entries = this.state.news_ids.map((id, index) => <Entry key={index} number={index+1} data={this.state.stories[id]}/>)
+
     return (
       <Container>
         <div className="App">
@@ -13,14 +44,13 @@ class App extends React.Component {
           </header>
         </div>
         <div className="Content">
-          <Entry/>
-          <Entry/>
-          <Entry/>
+          {entries}
         </div>
       </Container>
     );
   }
 }
+
 
 class Entry extends React.Component {
   constructor(props) {
@@ -29,10 +59,18 @@ class Entry extends React.Component {
       expanded: false
     }
     this.expand = this.expand.bind(this)
+    this.goToWebsite = this.goToWebsite.bind(this)
   }
 
   expand() {
     this.setState({expanded: !this.state.expanded})
+  }
+
+  goToWebsite() {
+    if (this.props.data?.url != null) {
+      var url = this.props.data?.url
+      window.location.href = url
+    }
   }
 
   render() {
@@ -43,25 +81,35 @@ class Entry extends React.Component {
         <Highlight></Highlight>
         <Highlight></Highlight>
         <div className="EntryFooter">
-          <span onClick={this.expand}>Visit Website</span>
+          <span onClick={this.goToWebsite}>Visit Website</span>
           <span onClick={this.expand}> | See Less</span>
         </div>
         </div>
     }
 
+    
+    var host = ""
+    if (this.props.data?.url != null) {
+      host = "(" + new URL(this.props.data?.url).hostname + ")"
+      var title = this.props.data?.title
+      var score = this.props.data?.score
+      var author = this.props.data?.by
+      var number = this.props?.number + "."
+    }
+    
     return (
       <Row className="Entry">
         <Col xs="auto" className="EntryNumber">
-          <b>1.</b>
+          <b>{number}</b>
         </Col>
         <Col className="EntryDetails">
         <div onClick={this.expand} className="EntryTitle">
-          <span>Google</span>
-          <span className="EntryHost">Google</span>
+          <span>{title}</span>
+          <span className="EntryHost">{host}</span>
         </div>
         <div className="EntrySubline">
-          <span>120 points by nvahalik</span>
-          <span onClick={this.expand}> | 6 Highlights</span>
+          <span>{score} points by {author}</span>
+          <span onClick={this.expand}> | 3 Highlights</span>
         </div>
         {highlights}
         </Col>
@@ -78,7 +126,7 @@ class Highlight extends React.Component {
           <div className="Thread"></div>
         </Col>
         <Col xs={10} l={5}>
-          Hello, this is a highlight from a Hacker News Article. It is useful.
+          Hello, this will be a highlight from a Hacker News Article. It is intended to be useful.
         </Col>
       </Row>
     )
