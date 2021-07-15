@@ -1,0 +1,61 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #FFCF00;
+  height: 25px;
+  font-size: 20px;
+  color: black;
+  font-weight: 700;
+  text-align: left;
+}
+
+.Content {
+  background-color: #F6F6EF;
+  height: 100vh;
+}
+
+.Entry {
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.EntryNumber {
+  font-size: 20px;
+  text-align: right;
+}
+
+.EntryTitle {
+  font-size: 20px;
+}
+
+.EntrySubline {
+  font-size: 15px;
+  color: #828282;
+}
+
+.EntryFooter {
+  padding-top: 5px;
+  font-size: 15px;
+  color: #828282; 
+}
+
+.EntryHost {
+  padding-left: 10px;
+  font-size: 15px;
+  color: #828282;
+}
+
+.Highlight {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.Thread {
+  border-radius: 2px;
+  width: 4px;
+  height: 100%;
+  background-color: #FFCF00;
+}
