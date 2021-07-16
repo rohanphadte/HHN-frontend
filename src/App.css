@@ -2,6 +2,21 @@
 
 }
 
+.About {
+  padding-right: 10px;
+  float: right;
+}
+
+.AboutAlert {
+  z-index: 1000;
+  width: 100px;
+  height: 100px;
+}
+
+.boldHighlights {
+  color: black;
+}
+
 .App-header {
   background-color: #FFCF00;
   height: 30px;

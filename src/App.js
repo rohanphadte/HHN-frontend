@@ -5,9 +5,11 @@ import {Container, Row, Col} from "react-bootstrap"
 class App extends React.Component {
   constructor(props) {
     super(props);
+    this.showAbout = this.showAbout.bind(this)
     this.state = {
       news_ids: [],
-      stories: {}
+      stories: {},
+      showAbout: false
     }
   }
 
@@ -16,31 +18,80 @@ class App extends React.Component {
     fetch(url)
       .then(response => response.json())
       .then(json => {
-         this.setState({ news_ids: json.slice(0, 20) })
+         this.setState({ news_ids: json.slice(0, 30) })
          this.populateData()
       });
   }
 
   populateData() {
-    for (let i = 0; i < this.state.news_ids.length; i++) {
-      var url = "https://hacker-news.firebaseio.com/v0/item/" + this.state.news_ids[i] + ".json?print=pretty"
-      fetch(url)
-        .then(response => response.json())
-        .then(json => {
-          const stories = { ...this.state.stories, [this.state.news_ids[i]]: json} 
-          this.setState({ stories: stories })
-        });
-    }
+    var urls = this.state.news_ids.map((id) => "https://hacker-news.firebaseio.com/v0/item/" + id + ".json?print=pretty")
+    Promise.all(
+      urls.map(url =>
+        fetch(url)
+          .then(res => res.json())
+      )
+    ).then(data => {
+      var stories = {}
+      var urls = []
+      for (let i = 0; i < data.length; i++) {
+        var storydata = data[i]
+        storydata["numHighlights"] = 0
+        stories[data[i]["id"]] = storydata
+        urls.push(data[i].url ?? "")
+      }
+      this.setState({ stories: stories })
+      return urls
+    }).then(urls => {
+      fetch("https://hacker-news-dot-commandfeed.uc.r.appspot.com/getHighlights", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({"urls": urls})
+      }).then(res => res.json())
+      .then(data => {
+        var stories = this.state.stories
+        for (let i = 0; i < data.length; i++) {
+          for (var key in stories) {
+            if (stories[key].url == data[i].url) {
+              var storyData = stories[key]
+              storyData["highlights"] = data[i].highlights
+              storyData["numHighlights"] = data[i].highlights.length
+              stories[key] = storyData
+              this.setState({ stories: stories })
+            }
+          }
+        }
+      })
+    })
+  }
+
+  showAbout() {
+    this.setState({showAbout: !this.state.showAbout})
   }
 
   render() {
-    var entries = this.state.news_ids.map((id, index) => <Entry key={index} number={index+1} data={this.state.stories[id]}/>)
+    var showAbout = (
+      <div className="AboutAlert">
+        This is awesome.
+      </div>
+    )
+    if (!this.state.showAbout) {
+      showAbout = <div></div>
+    }
 
+    var entries = this.state.news_ids.map((id, index) => <Entry key={index} number={index+1} data={this.state.stories[id]}/>)
     return (
       <Container>
         <div className="App">
+        {showAbout}
           <header className="App-header">
-            Highlighted Hacker News
+            <span>
+              Highlighted Hacker News
+            </span>
+            <span onClick={this.showAbout} className="About">
+              about
+            </span>
           </header>
         </div>
         <div className="Content">
@@ -76,10 +127,13 @@ class Entry extends React.Component {
   render() {
     var highlights = <div></div>
     if (this.state.expanded) {
+      var highlightRows = <div></div>
+      if (this.props.data?.highlights) {
+        highlightRows = this.props.data?.highlights.map(x => <Highlight text={x}/>)
+      }
+
       highlights = <div>
-        <Highlight></Highlight>
-        <Highlight></Highlight>
-        <Highlight></Highlight>
+        {highlightRows}
         <div className="EntryFooter">
           <span onClick={this.goToWebsite}>Visit Website</span>
           <span onClick={this.expand}> | See Less</span>
@@ -87,14 +141,28 @@ class Entry extends React.Component {
         </div>
     }
 
-    
     var host = ""
-    if (this.props.data?.url != null) {
-      host = "(" + new URL(this.props.data?.url).hostname + ")"
+    var scoreSpan = <span></span>
+    var highlightSpan = <span></span>
+
+    if (this.props.data?.title != null) {
+      if (this.props.data?.url != null) {
+        host = "(" + new URL(this.props.data?.url).hostname + ")"
+      }
       var title = this.props.data?.title
       var score = this.props.data?.score
       var author = this.props.data?.by
       var number = this.props?.number + "."
+      var numHighlights = this.props.data?.numHighlights
+      scoreSpan = <span>{score} points by {author}</span>
+
+      if (numHighlights > 0) {
+        if (numHighlights == 1) {
+          highlightSpan = <span onClick={this.expand}> | <b className="boldHighlights">{numHighlights} Highlight </b></span>
+        } else {
+          highlightSpan = <span onClick={this.expand}> | <b className="boldHighlights">{numHighlights} Highlights </b></span>
+        }
+      }
     }
     
     return (
@@ -108,8 +176,8 @@ class Entry extends React.Component {
           <span className="EntryHost">{host}</span>
         </div>
         <div className="EntrySubline">
-          <span>{score} points by {author}</span>
-          <span onClick={this.expand}> | 3 Highlights</span>
+          {scoreSpan}
+          {highlightSpan}
         </div>
         {highlights}
         </Col>
@@ -126,7 +194,7 @@ class Highlight extends React.Component {
           <div className="Thread"></div>
         </Col>
         <Col xs={10} l={5}>
-          Hello, this will be a highlight from a Hacker News Article. It is intended to be useful.
+          {this.props.text}
         </Col>
       </Row>
     )
