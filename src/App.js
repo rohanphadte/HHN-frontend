@@ -1,6 +1,6 @@
 import './App.css';
 import React from "react";
-import {Container, Row, Col} from "react-bootstrap"
+import {Container, Row, Col, Alert} from "react-bootstrap"
 
 class App extends React.Component {
   constructor(props) {
@@ -18,7 +18,7 @@ class App extends React.Component {
     fetch(url)
       .then(response => response.json())
       .then(json => {
-         this.setState({ news_ids: json.slice(0, 30) })
+         this.setState({ news_ids: json.slice(0, 20) })
          this.populateData()
       });
   }
@@ -53,7 +53,7 @@ class App extends React.Component {
         var stories = this.state.stories
         for (let i = 0; i < data.length; i++) {
           for (var key in stories) {
-            if (stories[key].url == data[i].url) {
+            if (stories[key].url === data[i].url) {
               var storyData = stories[key]
               storyData["highlights"] = data[i].highlights
               storyData["numHighlights"] = data[i].highlights.length
@@ -71,11 +71,7 @@ class App extends React.Component {
   }
 
   render() {
-    var showAbout = (
-      <div className="AboutAlert">
-        This is awesome.
-      </div>
-    )
+    var showAbout = <AlertDismissible />
     if (!this.state.showAbout) {
       showAbout = <div></div>
     }
@@ -157,7 +153,7 @@ class Entry extends React.Component {
       scoreSpan = <span>{score} points by {author}</span>
 
       if (numHighlights > 0) {
-        if (numHighlights == 1) {
+        if (numHighlights === 1) {
           highlightSpan = <span onClick={this.expand}> | <b className="boldHighlights">{numHighlights} Highlight </b></span>
         } else {
           highlightSpan = <span onClick={this.expand}> | <b className="boldHighlights">{numHighlights} Highlights </b></span>
@@ -197,6 +193,23 @@ class Highlight extends React.Component {
           {this.props.text}
         </Col>
       </Row>
+    )
+  }
+}
+
+class AlertDismissible extends React.Component {
+  render() {
+    return (
+      <Alert variant="info">
+        <Alert.Heading>Why Highlights?</Alert.Heading>
+        <p>
+          Hi There! I'm an avid Hacker News reader, but I sometimes find myself spending hours reading articles. I wanted to create Hacker News, but just the highlights, where people could understand teh general idea before committing to reading.
+        </p>
+        <hr />
+        <p className="mb-0">
+          These are my highlights from the top articles - decided by me. I don't claim to the sole arbiter of truth here, but I hope it helps the Hacker community.
+        </p>
+      </Alert>
     )
   }
 }
